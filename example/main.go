@@ -2,7 +2,10 @@ package main
 
 import (
 	"fmt"
+	"io/ioutil"
 	"log"
+	"net/http"
+	"net/url"
 	"os"
 	"os/signal"
 	"syscall"
@@ -29,11 +32,35 @@ func main() {
 	defer sshC.Close()
 
 	go sshC.StartSocks5Server(socks5Address)
+	for sshC.GetStatus() < 2 {
+	}
+
+	httpget()
 
 	ch := make(chan os.Signal)
 	signal.Notify(ch, syscall.SIGINT, syscall.SIGTERM)
 	<-ch
-
 	fmt.Println("exiting")
 
+}
+
+func httpget() {
+	proxyURL, err := url.Parse("socks5://localhost:1080")
+	if err != nil {
+		log.Fatal(err)
+	}
+	transport := &http.Transport{
+		Proxy: http.ProxyURL(proxyURL),
+	}
+	client := &http.Client{Transport: transport}
+	resp, err := client.Get("http://ifconfig.me")
+	if err != nil {
+		log.Fatal(err)
+	}
+	defer resp.Body.Close()
+	body, err := ioutil.ReadAll(resp.Body)
+	if err != nil {
+		log.Fatal(err)
+	}
+	fmt.Println(string(body))
 }

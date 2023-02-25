@@ -19,11 +19,19 @@ func (s *SSHConn) StartSocks5Server(socks5Address string) error {
 	}
 
 	serverSocks, err := socks5.New(conf)
+
 	if err != nil {
 		return fmt.Errorf("failed to create socks5 server %v", err)
 	}
 
-	if err := serverSocks.ListenAndServe("tcp", socks5Address); err != nil {
+	l, err := net.Listen("tcp", socks5Address)
+
+	if err != nil {
+		return fmt.Errorf("failed to listen socks5 server on %s, %v", socks5Address, err)
+	}
+	s.status = 2
+
+	if err := serverSocks.Serve(l); err != nil {
 		return fmt.Errorf("failed to start socks5 server %v", err)
 	}
 	return nil

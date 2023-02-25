@@ -51,6 +51,10 @@ func (s *SSHConn) Connect() error {
 	return nil
 }
 
+func (s *SSHConn) GetStatus() int64 {
+	return s.status
+}
+
 func (s *SSHConn) Close() error {
 	if s.sshClient != nil {
 		err := s.sshClient.Close()
