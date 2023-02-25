@@ -15,13 +15,13 @@ import (
 
 func main() {
 	//address and port of ssh server to connect to
-	sshAddress := "18.162.155.249:22"
+	sshAddress := "18.162.151.198:22"
 
 	//address and listening port of socks5 server to start
 	socks5Address := "localhost:1080"
 
 	//username, private key path, and address of ssh server to connect to
-	sshC, err := sshts.New("ec2-user", "/home/k/.ssh/id_rsa", sshAddress)
+	sshC, err := sshts.New("proxy", "/home/k/.ssh/proxy.key", sshAddress)
 	if err != nil {
 		log.Fatal(err)
 	}
