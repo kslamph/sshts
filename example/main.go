@@ -14,6 +14,58 @@ import (
 )
 
 func main() {
+	tunnelexample()
+}
+
+/* exmaple:
+there is a remote server 101.32.14.95 , we have ssh access to it, and there is a postgres sql server running on it and listen on localhost:5432
+this 101.32.14.95:5432 is not accessible from outside, but we can access it by ssh tunneling.
+
+this setup increased the security of the postgres server, because it is not accessible from outside, and we can only access it by ssh tunneling.
+there are 2 advantages of this setup:
+using key to access ssh server is a proven safe way to access remote server
+ssh tunneling is encrypted, so the data is safe at transport layer
+*/
+
+func tunnelexample() {
+	//address and port of ssh server to connect to
+	sshAddress := "101.32.14.95:22"
+
+	//local port to listen on
+	localTunnel := "localhost:15432"
+
+	//server to tunnel to on remote, usually localhost but can be any address
+	remoteTunnel := "localhost:5432"
+
+	sshC, err := sshts.New("root", "/home/k/.ssh/id_rsa", sshAddress)
+	if err != nil {
+		log.Fatal(err)
+	}
+	err = sshC.Connect()
+	if err != nil {
+		log.Fatal(err)
+	}
+	defer sshC.Close()
+
+	go sshC.StartTunnel(localTunnel, remoteTunnel)
+	fmt.Println("press ctrl+c to exit")
+	ch := make(chan os.Signal)
+	signal.Notify(ch, syscall.SIGINT, syscall.SIGTERM)
+	<-ch
+	fmt.Println("exiting")
+
+}
+
+/* exmaple:
+there is a remote server 101.32.14.95 , we have ssh access to it, we want use it as a socks5 proxy
+and let the socks5 proxy listen on localhost:1080
+
+this setup has some advantages over proxy:
+1. it is encrypted, so the data is safe at transport layer
+2. there is no proxy server for maintain and it is easy to setup
+*/
+
+func socks5example() {
 	//address and port of ssh server to connect to
 	sshAddress := "18.162.151.198:22"
 
@@ -22,6 +74,7 @@ func main() {
 
 	//username, private key path, and address of ssh server to connect to
 	sshC, err := sshts.New("proxy", "/home/k/.ssh/proxy.key", sshAddress)
+
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -37,6 +90,7 @@ func main() {
 
 	httpget()
 
+	fmt.Println("press ctrl+c to exit")
 	ch := make(chan os.Signal)
 	signal.Notify(ch, syscall.SIGINT, syscall.SIGTERM)
 	<-ch
