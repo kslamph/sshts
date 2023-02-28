@@ -17,14 +17,18 @@ func main() {
 	tunnelexample()
 }
 
-/* exmaple:
-there is a remote server 101.32.14.95 , we have ssh access to it, and there is a postgres sql server running on it and listen on localhost:5432
-this 101.32.14.95:5432 is not accessible from outside, but we can access it by ssh tunneling.
+/* tunnel exmaple:
+there is a remote server 101.32.14.95 , we have ssh access to it;
+there is a postgres sql server running on it and listen on localhost:5432;
+and this 101.32.14.95:5432 is not accessible from outside.
+
+we want to access the postgres server by localhost:15432
 
 this setup increased the security of the postgres server, because it is not accessible from outside, and we can only access it by ssh tunneling.
-there are 2 advantages of this setup:
+there are 3 advantages of this setup:
 using key to access ssh server is a proven safe way to access remote server
 ssh tunneling is encrypted, so the data is safe at transport layer
+we dont have to expose the postgres server interfaces other than localhost, so it is more secure
 */
 
 func tunnelexample() {
@@ -56,7 +60,7 @@ func tunnelexample() {
 
 }
 
-/* exmaple:
+/* socks5 exmaple:
 there is a remote server 101.32.14.95 , we have ssh access to it, we want use it as a socks5 proxy
 and let the socks5 proxy listen on localhost:1080
 
