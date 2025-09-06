@@ -5,6 +5,7 @@ import (
 	"os"
 
 	"golang.org/x/crypto/ssh"
+	"golang.org/x/crypto/ssh/knownhosts"
 )
 
 type SSHConn struct {
@@ -16,7 +17,11 @@ type SSHConn struct {
 
 // New("user", "/home/user/.ssh/id_rsa", "1.1.1.1:22")
 func New(user, rsaKeyfile, serverAddr string) (*SSHConn, error) {
+	return NewWithHostKeyCallback(user, rsaKeyfile, serverAddr, ssh.InsecureIgnoreHostKey())
+}
 
+// NewWithHostKeyCallback creates a new SSH connection with a custom host key callback
+func NewWithHostKeyCallback(user, rsaKeyfile, serverAddr string, hostKeyCallback ssh.HostKeyCallback) (*SSHConn, error) {
 	key, err := os.ReadFile(rsaKeyfile)
 	if err != nil {
 		return nil, fmt.Errorf("unable to read private key: %v", err)
@@ -31,7 +36,7 @@ func New(user, rsaKeyfile, serverAddr string) (*SSHConn, error) {
 		Auth: []ssh.AuthMethod{
 			ssh.PublicKeys(signer),
 		},
-		HostKeyCallback: ssh.InsecureIgnoreHostKey(),
+		HostKeyCallback: hostKeyCallback,
 	}
 	return &SSHConn{
 		sshConf:    sshConf,
@@ -39,6 +44,16 @@ func New(user, rsaKeyfile, serverAddr string) (*SSHConn, error) {
 		status:     0,
 		sshClient:  nil,
 	}, nil
+}
+
+// NewWithKnownHosts creates a new SSH connection that verifies host keys against a known_hosts file
+func NewWithKnownHosts(user, rsaKeyfile, serverAddr, knownHostsFile string) (*SSHConn, error) {
+	hostKeyCallback, err := knownhosts.New(knownHostsFile)
+	if err != nil {
+		return nil, fmt.Errorf("could not create host key callback from known_hosts file: %v", err)
+	}
+	
+	return NewWithHostKeyCallback(user, rsaKeyfile, serverAddr, hostKeyCallback)
 }
 
 func (s *SSHConn) Connect() error {
